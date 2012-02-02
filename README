@@ -1,0 +1,43 @@
+README
+======
+
+The eigenvalue response matrix method (ERMM) can be implemented
+using a variety of solver types; each of these requires at 
+some point the multiplication
+
+    M * R * J
+
+where J is a vector of length n, R is a block diagonal matrix
+of dimension n by n, and M is essentially a permutation matrix
+of size n by n.
+
+We wish to study the following:
+
+  1) How does R*J scale in parallel as a function of
+      - number of processes
+      - number of blocks per process
+      - size of the block
+     when the blocks are just some arbitrary data (e.g. ones)?
+  2) How does M*R*J scale for the same variables?  For starter, 
+     we can simply let M be a random permutation matrix.
+  3) Repeat 2 for a real set of block data (i.e. from transport
+     calculations) and a real connectivity matrix M (perhaps
+     predefined from SERMENT, etc.)
+  4) Extend 3) by solving  M*R*J = lambda*J using SLEPc.
+
+Ultimately, we need to know how well we can expect the ERMM to 
+scale.  Is it to be a method for workstations, clusters, or, 
+hopefully, large scale systems?  
+
+INSTALLATION
+============
+
+Enter the build directory and copy a config_xxx file there.  A
+number of config_xxx files are there, including the one for
+kilkenny.  Modify it if needed and do
+
+  >> ./config_xxx
+  >> make
+
+That's it.  Also, an eclipse project file is created in the
+CMake process, if you use it.
