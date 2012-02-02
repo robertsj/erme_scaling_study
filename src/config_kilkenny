@@ -8,8 +8,8 @@ cmake                                              \
 -G "Eclipse CDT4 - Unix Makefiles"                 \
 -D CMAKE_BUILD_TYPE=Release                        \
 -D PETSC_DIR=/opt/petsc/petsc-3.2-p6               \
--D PETSC_ARCH=gcc-4.4.1--acml-4.4.0-release        \
--D SLEPC_DIR=/home/robertsj/opt/slepc/slepc-3.2-p3 \
+-D PETSC_ARCH=gcc-4.4.1-acml-4.4.0-release         \
+-D SLEPC_DIR=/opt/slepc/slepc-3.2-p3               \  
 -D SLEPC_ARCH=gcc-4.4.1-acml-4.4.0-release         \
-/home/robertsj/Research/miniprojects/scaling_study/source
+/home/user/path/to/src
 

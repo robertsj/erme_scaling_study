@@ -145,11 +145,11 @@ void Data::build_R()
   MatAssemblyBegin(d_R, MAT_FINAL_ASSEMBLY);
   MatAssemblyEnd(d_R, MAT_FINAL_ASSEMBLY);
 
-  // print me
-  PetscViewer view;
-  PetscViewerBinaryOpen(MPI_COMM_WORLD,"testmat",FILE_MODE_WRITE, &view);
-  MatView(d_R, view);
-  PetscViewerDestroy(&view);
+  // print me (debugging)
+  // PetscViewer view;
+  // PetscViewerBinaryOpen(MPI_COMM_WORLD,"testmat",FILE_MODE_WRITE, &view);
+  // MatView(d_R, view);
+  // PetscViewerDestroy(&view);
 
 }
 

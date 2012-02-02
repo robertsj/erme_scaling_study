@@ -61,10 +61,10 @@ int main(int argc, char *args[])
     total_time += time[i];
   }
 
-  // View the vector.
-  PetscViewer view;
-  PetscViewerBinaryOpen(MPI_COMM_WORLD,"testvecout",FILE_MODE_WRITE, &view);
-  VecView(dat.d_J2, view);
+  // View the vector (debugging)
+  // PetscViewer view;
+  // PetscViewerBinaryOpen(MPI_COMM_WORLD,"testvecout",FILE_MODE_WRITE, &view);
+  // VecView(dat.d_J2, view); // <-- all elements should be equal to block_size
 
   // Wrap up.
   dat.cleanup();
