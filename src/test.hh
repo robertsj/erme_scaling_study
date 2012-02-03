@@ -65,7 +65,7 @@ public:
   void test_fixed_block_Vpp(int block_size, int number_blocks);
 
   /*!
-   *  \brief Timing for fixed block size, varied per process
+   *  \brief Timing for varied block size, varied per process
    *
    *  Strong scaling for a fixed problem size with varying
    *  block size.
