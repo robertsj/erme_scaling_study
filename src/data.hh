@@ -5,9 +5,10 @@
  * \date   02/01/2012
  * \brief  Data class definition.
  */
+//---------------------------------------------------------------------------//
 
-#ifndef GLOBALINPUT_HH
-#define GLOBALINPUT_HH
+#ifndef DATA_HH
+#define DATA_HH
 
 #include <iostream>
 #include <fstream>
@@ -37,8 +38,8 @@ public:
   //\}
 
   /// Set problem parameters
-  Data(int block_per_process) :
-    d_block_per_process(block_per_process), d_rank(0)
+  Data() :
+    d_rank(0)
   {}
 
   ~Data()
@@ -53,7 +54,7 @@ public:
    *  100, and values all set to unity.  Otherwise, read
    *  the file "block.txt".
    */
-  void load_block(int flag = 0, int block_size = 100);
+  void load_block(int block_per_process, int flag = 0, int block_size = 100);
 
   /*!
    *  \brief Build the block matrix R and associated vectors.

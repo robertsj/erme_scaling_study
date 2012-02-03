@@ -8,10 +8,12 @@
 //---------------------------------------------------------------------------//
 
 #include "data.hh"
+#include "test.hh"
 #include "petsc.h"
+#include "slepceps.h"
 #include <iostream>
 #include <cmath>
-#include "slepceps.h"
+
 using namespace std;
 
 //---------------------------------------------------------------------------//
@@ -31,63 +33,54 @@ using namespace std;
  * shown to be a viable alternative to extant parallel transport approaches.
  *
  */
+//---------------------------------------------------------------------------//
+
 int main(int argc, char *args[])
 {
-  // Initialize PETSc and SLEPc.  Only SLEPc really needs to be
-  // initialized, but being explicit is useful.
+
+  // Initialize PETSc and SLEPc.  Explicit PETSc call is optional here.
   PetscInitialize(&argc, &args, PETSC_NULL, PETSC_NULL);
   SlepcInitialize(&argc, &args, (char*) 0, "");
 
+  // Get some command line parameters
+  PetscBool flag;
+  int block_size;
+  int number_blocks;
+  int test_id;
+  int nt;            // number steps for timing loop
+
+  PetscOptionsGetInt(PETSC_NULL, "-bs", &block_size, &flag);
+  if (!flag) block_size = 600;
+
+  PetscOptionsGetInt(PETSC_NULL, "-nb", &number_blocks, &flag);
+  if (!flag) number_blocks = 24;
+
+  PetscOptionsGetInt(PETSC_NULL, "-test", &test_id, &flag);
+  if (!flag) test_id = 0;
+
+  PetscOptionsGetInt(PETSC_NULL, "-nt", &nt, &flag);
+  if (!flag) nt = 100;
+
   // Define our data.
-  Data dat(1);
+  Data dat;
 
-  // Load it.
-  dat.load_block(0, 2000);
+  // Define the test.
+  Test test(dat, nt);
 
-  // Build it.
-  dat.build_R();
+  // Run a test.
+  if (test_id == 0)
+    test.test_fixed_block_1pp(block_size, number_blocks);
+  else if (test_id == 1)
+    test.test_varied_block_1pp(number_blocks);
+  else if (test_id == 2)
+    test.test_fixed_block_Vpp(block_size, number_blocks);
+  else if (test_id == 3)
+    test.test_varied_block_Vpp(number_blocks);
+  else
+    cout << "unknown test." << endl;
 
-  // How many times we multiply (to give better timing results).
-  int number_loops = 100;
-  double time[number_loops];
-  double total_time = 0.0, temp_time;
-
-  for (int i = 0; i < number_loops; i++)
-  {
-    temp_time = MPI_Wtime();
-    // Multiply
-    MatMult(dat.d_R, dat.d_J1, dat.d_J2);
-    time[i] = MPI_Wtime() - temp_time;
-    total_time += time[i];
-  }
-
-  // View the vector (debugging)
-  // PetscViewer view;
-  // PetscViewerBinaryOpen(MPI_COMM_WORLD,"testvecout",FILE_MODE_WRITE, &view);
-  // VecView(dat.d_J2, view); // <-- all elements should be equal to block_size
-
-  // Wrap up.
-  dat.cleanup();
   SlepcFinalize();
   PetscFinalize();
-
-  if (dat.rank() == 0)
-  {
-    // Compute mean and standard deviation
-    double mean_time = total_time / number_loops;
-    double std_time = 0.0;
-    for (int i = 0; i < number_loops; i++)
-      std_time += (time[i] - mean_time)*(time[i] - mean_time);
-    std_time = sqrt(std_time/number_loops);
-    cout << " ------------------------------------------" << endl;
-    cout << " TOTAL time = " << total_time << " seconds" << endl;
-    cout << "  MEAN time = " << mean_time << " seconds" << endl;
-    cout << "   STD time = " << std_time << " seconds" << endl;
-    cout << " ------------------------------------------" << endl;
-  }
-
-
-
   return 0;
 }
 

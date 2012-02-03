@@ -11,5 +11,5 @@ cmake                                              \
 -D PETSC_ARCH=gcc-4.5.2-acml-4.4.0-release         \
 -D SLEPC_DIR=/home/robertsj/opt/slepc/slepc-3.2-p3 \
 -D SLEPC_ARCH=gcc-4.5.2-acml-4.4.0-release         \
-/home/robertsj/Research/miniprojects/scaling_study/source
+/home/robertsj/Research/erme_scaling_study/src
 

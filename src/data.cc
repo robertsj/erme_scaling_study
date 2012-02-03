@@ -1,18 +1,21 @@
 //----------------------------------*-C++-*----------------------------------//
 /*
- * \file   data.hh
+ * \file   data.cc
  * \author Jeremy Roberts
  * \date   02/01/2012
  * \brief  Data class member definitions.
  */
+//---------------------------------------------------------------------------//
 
 #include "data.hh"
 
 #include <fstream>
 #include <assert.h>
 
-void Data::load_block(int flag, int block_size)
+void Data::load_block(int block_per_process, int flag, int block_size)
 {
+
+  d_block_per_process = block_per_process;
 
   // File with sizes and data.
   ifstream datafile;
@@ -79,14 +82,14 @@ void Data::build_R()
   d_num_rows_local  = d_block_per_process * d_block_size;
   d_num_rows_global = d_num_block * d_block_size;
 
-  if (d_rank == 0)
-  {
-    cout << "    d_num_rows_local = " << d_num_rows_local << endl
-         << "        d_block_size = " << d_block_size << endl
-         << " d_block_per_process = " << d_block_per_process << endl
-         << "         d_num_block = " << d_num_block << endl
-         << "   d_num_rows_global = " << d_num_rows_global << endl;
-  }
+//  if (d_rank == 0)
+//  {
+//    cout << "    d_num_rows_local = " << d_num_rows_local << endl
+//         << "        d_block_size = " << d_block_size << endl
+//         << " d_block_per_process = " << d_block_per_process << endl
+//         << "         d_num_block = " << d_num_block << endl
+//         << "   d_num_rows_global = " << d_num_rows_global << endl;
+//  }
 
   // Create the matrix.  Ax = y.  Our first attempt is
   // to break up the matrix as follows.  The system is
@@ -146,10 +149,7 @@ void Data::build_R()
   MatAssemblyEnd(d_R, MAT_FINAL_ASSEMBLY);
 
   // print me (debugging)
-  // PetscViewer view;
-  // PetscViewerBinaryOpen(MPI_COMM_WORLD,"testmat",FILE_MODE_WRITE, &view);
-  // MatView(d_R, view);
-  // PetscViewerDestroy(&view);
+
 
 }
 
