@@ -11,7 +11,6 @@
 #define TEST_HH
 
 #include "data.hh"
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -71,6 +70,16 @@ public:
    *  block size.
    */
   void test_varied_block_Vpp(int number_blocks);
+
+  /*!
+   *  \brief Timing for M(R*J)
+   */
+  void test_fixed_block_MR(int block_size, int number_blocks);
+
+  /*!
+   *  \brief Timing eigensolve, M(R*J) = lambda*J
+   */
+  void test_fixed_block_eig(int block_size, int number_blocks, int solver);
 
   /// \}
 

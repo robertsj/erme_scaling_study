@@ -45,6 +45,7 @@ include_directories(${SLEPC_INCLUDES})
 set(SRC
     driver.cc
     data.cc
+    connect.cc
     test.cc
 )
 

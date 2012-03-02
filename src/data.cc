@@ -12,6 +12,8 @@
 #include <fstream>
 #include <assert.h>
 
+
+
 void Data::load_block(int block_per_process, int flag, int block_size)
 {
 
@@ -25,22 +27,35 @@ void Data::load_block(int block_per_process, int flag, int block_size)
 
   if (d_rank == 0)
   {
-    if (flag)
+    if (d_read)
     {
       // Open the block.txt
+      cout << "reading block.txt" << endl;
       datafile.open("block.txt");
-      // Read the block size
-      datafile >> d_block_size;
+      // Read the energy, spatial, azimuthal, and polar order
+      datafile >> d_number_groups; cout << " number_groups = " << d_number_groups << endl;
+      datafile >> d_space_order;   cout << "   space_order = " << d_space_order   << endl;
+      datafile >> d_azimuth_order; cout << " azimuth_order = " << d_azimuth_order << endl;
+      datafile >> d_polar_order;   cout << "   polar_order = " << d_polar_order   << endl;
+      d_block_size = 4*d_number_groups * (1+d_space_order) * (1+d_azimuth_order) * (1+d_polar_order);
     }
     else
     {
       // Just default it for testing.
-      d_block_size = block_size;
+      d_block_size    = block_size;
+      d_number_groups = 0;
+      d_space_order   = block_size - 1;
+      d_azimuth_order = 0;
+      d_polar_order   = 0;
     }
   }
 
   // Broadcast the block size
-  MPI_Bcast(&d_block_size, 1, MPI_INTEGER, 0, PETSC_COMM_WORLD);
+  MPI_Bcast(&d_number_groups, 1, MPI_INTEGER, 0, PETSC_COMM_WORLD);
+  MPI_Bcast(&d_space_order,   1, MPI_INTEGER, 0, PETSC_COMM_WORLD);
+  MPI_Bcast(&d_azimuth_order, 1, MPI_INTEGER, 0, PETSC_COMM_WORLD);
+  MPI_Bcast(&d_polar_order,   1, MPI_INTEGER, 0, PETSC_COMM_WORLD);
+  MPI_Bcast(&d_block_size,    1, MPI_INTEGER, 0, PETSC_COMM_WORLD);
 
   // We all allocate the array size.
   d_block = new double[d_block_size*d_block_size];
@@ -49,10 +64,18 @@ void Data::load_block(int block_per_process, int flag, int block_size)
   {
     if (flag)
     {
-      // Read the block
+      // Read the block -- remember, C is row-major.
       for (int i = 0; i < d_block_size*d_block_size; i++)
         datafile >> d_block[i];
       datafile.close();
+//      for (int i = 0; i < d_block_size; i++)
+//      {
+//        for (int j = 0; j < d_block_size; j++)
+//        {
+//          cout <<  d_block[j + i*d_block_size] << " ";
+//        }
+//        cout << endl;
+//      }
     }
     else
     {
@@ -82,14 +105,14 @@ void Data::build_R()
   d_num_rows_local  = d_block_per_process * d_block_size;
   d_num_rows_global = d_num_block * d_block_size;
 
-//  if (d_rank == 0)
-//  {
-//    cout << "    d_num_rows_local = " << d_num_rows_local << endl
-//         << "        d_block_size = " << d_block_size << endl
-//         << " d_block_per_process = " << d_block_per_process << endl
-//         << "         d_num_block = " << d_num_block << endl
-//         << "   d_num_rows_global = " << d_num_rows_global << endl;
-//  }
+  if (d_rank == 0)
+  {
+    cout << "    d_num_rows_local = " << d_num_rows_local << endl
+         << "        d_block_size = " << d_block_size << endl
+         << " d_block_per_process = " << d_block_per_process << endl
+         << "         d_num_block = " << d_num_block << endl
+         << "   d_num_rows_global = " << d_num_rows_global << endl;
+  }
 
   // Create the matrix.  Ax = y.  Our first attempt is
   // to break up the matrix as follows.  The system is
@@ -100,11 +123,11 @@ void Data::build_R()
   // process 1 gets column 1
   ierr = MatCreateMPIBAIJ(PETSC_COMM_WORLD,                 // MPI communicator
                           d_block_size,                     // size of block
-                          d_block_per_process*d_block_size, // # local rows (=y local size).  Note, I originally
+                          PETSC_DECIDE, //d_block_per_process*d_block_size, // # local rows (=y local size).  Note, I originally
                                                             // thought this was # of BLOCK rows
-                          d_block_per_process*d_block_size, // # local cols (=x local size) (thought it was # Bcols)
-                          PETSC_DETERMINE,                  // # global rows
-                          PETSC_DETERMINE,                  // # global cols
+                          PETSC_DECIDE, //d_block_per_process*d_block_size, // # local cols (=x local size) (thought it was # Bcols)
+                          d_num_block*d_block_size, //PETSC_DETERMINE,                  // # global rows
+                          d_num_block*d_block_size, //PETSC_DETERMINE,                  // # global cols
                           1,                                // # nz blocks per brow in diag part
                           PETSC_NULL,                       // array version; not needed
                           0,                                // # nz blocks per brow in offdiag
@@ -114,23 +137,28 @@ void Data::build_R()
 
   // Create the two vectors.
   ierr = VecCreateMPI(PETSC_COMM_WORLD,                     // MPI communicator
-                      d_block_per_process*d_block_size,     // local size
-                      PETSC_DETERMINE,                      // global size
+                      PETSC_DECIDE, //d_block_per_process*d_block_size,     // local size
+                      d_num_block*d_block_size,                      // global size
                       &d_J1);
   assert(~ierr); // Check for any error (a nonzero return value).
 
   ierr = VecDuplicate(d_J1, &d_J2);
+  ierr = VecDuplicate(d_J1, &d_J3);
   assert(~ierr); // Check for any error (a nonzero return value).
 
   // Initialize the vectors.
   VecSet(d_J1, 1.0);
   VecSet(d_J2, 0.0);
+  VecSet(d_J3, 0.0);
 
   VecAssemblyBegin(d_J1);
   VecAssemblyEnd(d_J1);
   VecAssemblyBegin(d_J2);
   VecAssemblyEnd(d_J2);
+  VecAssemblyBegin(d_J3);
+  VecAssemblyEnd(d_J3);
 
+  //  MatGetOwnershipRange(Amat,&Istart,&Iend);
   // Set my bounds.
   int Istart, Iend;
   Istart = d_rank*d_block_per_process;
@@ -150,12 +178,14 @@ void Data::build_R()
 
   // print me (debugging)
 
-
 }
+
 
 void Data::cleanup()
 {
+  delete d_block;
   MatDestroy(&d_R);
   VecDestroy(&d_J1);
   VecDestroy(&d_J2);
 }
+

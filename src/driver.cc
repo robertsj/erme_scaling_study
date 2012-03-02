@@ -48,6 +48,8 @@ int main(int argc, char *args[])
   int number_blocks;
   int test_id;
   int nt;            // number steps for timing loop
+  int read;
+  int solver;
 
   PetscOptionsGetInt(PETSC_NULL, "-bs", &block_size, &flag);
   if (!flag) block_size = 600;
@@ -61,8 +63,14 @@ int main(int argc, char *args[])
   PetscOptionsGetInt(PETSC_NULL, "-nt", &nt, &flag);
   if (!flag) nt = 100;
 
+  PetscOptionsGetInt(PETSC_NULL, "-read", &read, &flag);
+  if (!flag) read = 0;
+
+  PetscOptionsGetInt(PETSC_NULL, "-solver", &solver, &flag);
+  if (!flag) solver = 0;
+
   // Define our data.
-  Data dat;
+  Data dat(read);
 
   // Define the test.
   Test test(dat, nt);
@@ -76,6 +84,10 @@ int main(int argc, char *args[])
     test.test_fixed_block_Vpp(block_size, number_blocks);
   else if (test_id == 3)
     test.test_varied_block_Vpp(number_blocks);
+  else if (test_id == 4)
+    test.test_fixed_block_MR(block_size, number_blocks);
+  else if (test_id == 5)
+    test.test_fixed_block_eig(block_size, number_blocks, solver);
   else
     cout << "unknown test." << endl;
 
